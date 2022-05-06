@@ -1,20 +1,31 @@
 <template>
-  <v-container>
+  <v-container fluid style="background-color: #569ce3">
     <v-row>
       <v-icon @click="$nuxt.$router.push('/')">mdi-arrow-left</v-icon>
 
       <v-spacer></v-spacer>
 
-      <v-icon>mdi-delete</v-icon>
+      <v-icon @click="handleDelete">mdi-delete</v-icon>
     </v-row>
 
     <v-row style="justify-content: center">
-      <input
-        @keyup="(e) => changeEvent(e)"
+      <textarea
         id="content"
-        style="width: 80%; height: 80%"
-        v-model="note.content"
+        style="
+          width: 90%;
+          height: 800px;
+          background-color: #569ce3;
+          color: white;
+        "
+        :value="noteContent"
+        @keyup="(e) => changeEvent(e)"
       />
+    </v-row>
+
+    <v-row>
+      <p style="width: 100%; text-align: right; margin-bottom: 10%">
+        {{ noteCreatedDate }}
+      </p>
     </v-row>
 
     <!-- Toast message -->
@@ -41,7 +52,7 @@ export default {
   name: "DetailPage",
   data: () => {
     return {
-      noteId: $nuxt.$route.path.split('/')[2],
+      noteId: $nuxt.$route.path.split("/")[2],
       snackbar: {
         text: "Note content saved",
         render: false,
@@ -50,50 +61,59 @@ export default {
     };
   },
   methods: {
-    fakeInput(e) {
-      console.log(e)
+    handleDelete() {
+      if (confirm("You sure wanna delete this note ?")) {
+        this.$store.dispatch("delete", this.noteId);
+        this.$router.back();
+        window.localStorage.setItem("justDeleted",true)
+        this.$emit("onDeleteNote");
+      }
     },
     changeEvent(e) {
-      e.preventDefault();
-
-      const newContent = e.target.value;
+      const value = e.target.value;
 
       clearTimeout(this.inputTimer);
 
       const timer = setTimeout(() => {
-        this.save(newContent);
-      }, 500);
+        this.$store.dispatch("save", {
+          id: this.noteId,
+          contents: value,
+          creationDate: this.noteCreatedDate,
+        });
+        this.snackbar.render = true;
+      }, 1000);
 
       this.inputTimer = timer;
-    },
-    save(newContent) {
-      this.snackbar.render = true;
-      const newNote = this.getNote(this.noteId)
-      newNote.content = newContent;
-      // this.$store.dispatch('save', {payload:newNote} )  
     },
   },
   computed: {
     ...mapGetters({
       getNotes: "getNotes",
-      getNote:"getNote"
     }),
-    // note() {
-      
-    //     return this.getNote(this.noteId)
-    // },
-    note : {
+    noteCreatedDate: {
       get() {
-        return this.$store.state.notes.find(e=>e.id==this.noteId)
+        const arr = [...this.getNotes];
+        const b = arr.find((e) => e.id == this.noteId);
+        return b.creationDate;
+      },
+    },
+    noteContent: {
+      get() {
+        return this.getNotes.find((e) => e.id == this.noteId).contents;
       },
       set(value) {
-        console.log(value)
-        return this.$store.dispatch("save", value)
-      }
-    }
+        this.changeEvent(value);
+      },
+    },
   },
 };
 </script>
 
 <style>
+textarea:focus {
+  outline: none;
+}
+textarea {
+  resize: none;
+}
 </style>
