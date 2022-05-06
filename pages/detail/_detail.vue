@@ -17,7 +17,7 @@
           background-color: #569ce3;
           color: white;
         "
-        :value="noteContent"
+        v-model="dataNoteContent"
         @keyup="(e) => changeEvent(e)"
       />
     </v-row>
@@ -58,7 +58,11 @@ export default {
         render: false,
         timeout: 2000,
       },
+      dataNoteContent:""
     };
+  },
+  mounted() {
+    this.dataNoteContent = this.getNotes.find((e) => e.id == this.noteId).contents;
   },
   methods: {
     handleDelete() {
